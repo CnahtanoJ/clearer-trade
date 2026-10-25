@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clearer.trade</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>">
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+                    },
+                    colors: {
+                        darkbg: '#000000',
+                        darkcard: '#0a0a0a',
+                        accent: '#e5e7eb',
+                        muted: '#262626'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Alpine.js for lightweight reactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/dashboard.js?v=22"></script>
+</head>
+<body class="bg-slate-100 dark:bg-darkbg bg-dot-grid text-slate-900 dark:text-slate-200 min-h-screen font-sans antialiased relative overflow-x-hidden" x-data="appData()" :class="!isLoggedIn ? 'overflow-hidden h-screen' : ''">
+
+    <!-- Sleek background elements removed for brutalist/bento style -->
+
+    <!-- Login Gate (Shown when not logged in) -->
+    <div x-show="!isLoggedIn" x-cloak class="min-h-screen flex items-center justify-center px-4 relative z-50">
+        <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-none sm:rounded-xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
+            <!-- Decorative accent border -->
+            <div class="absolute top-0 left-0 w-full h-[1px] bg-slate-200 dark:bg-white/10"></div>
+            
+
+
+            <div class="text-center mb-8">
+                <div class="inline-flex p-3 bg-white/5 rounded-none mb-4 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Access <span class="lowercase italic font-bold tracking-tight font-sans">clearer.trade</span></h2>
+                <p class="text-slate-400 text-xs mt-2 leading-relaxed">Enter your secure HMAC Access Token to register this device/network under your Trader License (supports up to 3 active locations).</p>
+            </div>
+
+            <!-- Inputs -->
+            <form @submit.prevent="handleLogin()" class="space-y-4">
+                <!-- Access Token Input -->
+                <div>
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Access Token (Trader License)</label>
+                    <input type="password" x-model="loginAccessToken" placeholder="Paste your secure HMAC access token..." 
+                           class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-white text-slate-900 dark:text-white font-mono placeholder-slate-400 dark:placeholder-slate-600 transition-all">
+                </div>
+
+                <!-- Error Alert -->
+                <div x-show="loginError" x-transition class="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-[11px] leading-normal flex items-start space-x-2">
+                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <span x-text="loginError"></span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" :disabled="isLoggingIn"
+                        class="w-full py-3 px-4 bg-slate-200 hover:bg-slate-300 dark:bg-white dark:hover:bg-neutral-200 disabled:bg-neutral-800 text-black rounded font-bold font-mono uppercase tracking-widest transition-all flex justify-center items-center">
+                    <span x-show="!isLoggingIn">Enter Dashboard</span>
+                    <svg x-show="isLoggingIn" class="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="document.getElementById('disclaimer-modal').classList.remove('hidden')" class="text-[10px] text-slate-500 hover:text-slate-300 underline font-mono">
+                        Financial & Risk Disclaimer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Layout (Shown when logged in) -->
+    <div x-show="isLoggedIn" x-cloak class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="border-b border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-darkbg/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                
+                <span class="text-lg font-black tracking-tight text-black dark:text-white lowercase italic font-sans">clearer.trade</span>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+
+                <span x-show="isLoggedIn" x-cloak class="text-xs text-slate-500 dark:text-neutral-400 font-mono">
+                    Trader: <span class="text-black dark:text-white font-bold" x-text="traderId"></span>
+                </span>
+                <span x-show="isLoggedIn" x-cloak class="text-neutral-700">|</span>
+                <button @click="handleLogout()" class="text-xs text-slate-500 dark:text-neutral-400 hover:text-black dark:hover:text-white dark:text-white font-semibold transition-all">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Welcome Zone (Hidden when analyzing or done) -->
+        <div x-show="!isAnalyzing && !hasResults" class="mb-10 text-center max-w-2xl mx-auto">
+            <h2 class="text-3xl font-extrabold tracking-tight text-black dark:text-white sm:text-4xl">Institutional Risk Manager</h2>
+            <p class="mt-4 text-base text-slate-400">Statelessly analyze your trading performance for psychological leaks, overtrading, and regime failures.</p>
+        </div>
+
+        <!-- Input Tab Selector (Hidden when analyzing or done) -->
+        <div x-show="!isAnalyzing && !hasResults" class="flex justify-center items-center space-x-4 mb-8 text-xs font-semibold uppercase tracking-wider font-sans">
+            <button @click="activeTab = 'file'" :class="activeTab === 'file' ? 'text-slate-900 border-b-2 border-slate-900 dark:text-white dark:border-white' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white dark:text-white'" class="pb-1 transition-all">
+                Upload CSV Log
+            </button>
+            <span class="text-neutral-700">|</span>
+            <button @click="activeTab = 'exchange'" :class="activeTab === 'exchange' ? 'text-slate-900 border-b-2 border-slate-900 dark:text-white dark:border-white' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white dark:text-white'" class="pb-1 transition-all">
+                Sync Exchange (CCXT)
+            </button>
+        </div>
+
+        <!-- Inputs Section -->
+        <div x-show="!isAnalyzing && !hasResults" x-transition.duration.300ms class="max-w-2xl mx-auto">
+            <!-- CSV File Upload Tab -->
+            <div x-show="activeTab === 'file'" class="space-y-6">
+                <div id="dropzone" 
+                     @dragover.prevent="dragOver = true" 
+                     @dragleave.prevent="dragOver = false" 
+                     @drop.prevent="handleDrop($event)"
+                     :class="{'drag-active': dragOver}"
+                     class="border-2 border-dashed border-slate-800 rounded-2xl p-12 text-center transition-all duration-200 bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl/20 hover:bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl/40 cursor-pointer"
+                     @click="$refs.fileInput.click()">
+                    
+                    <svg class="mx-auto h-12 w-12 text-slate-500 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="flex text-sm text-slate-400 justify-center">
+                        <span class="relative cursor-pointer rounded-md font-bold text-slate-900 dark:text-white hover:text-slate-700 dark:text-neutral-300 underline focus-within:outline-none">
+                            <span>Upload CSV journal</span>
+                            <input x-ref="fileInput" type="file" class="sr-only" accept=".csv" @change="handleFileSelect($event)">
+                        </span>
+                        <p class="pl-1">or drag and drop</p>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-2 font-mono">Required: Date, Asset, Side, Size, Entry Price, PnL (Strategy optional)</p>
+                    <div class="mt-4">
+                        <button type="button" @click.stop="loadDemoData" class="text-xs font-bold text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:text-white bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 hover:border-neutral-500 py-1.5 px-3 rounded transition-all duration-200 font-mono uppercase tracking-wider">
+                            Or load demo trading log
+                        </button>
+                    </div>
+                    
+                    <div x-show="selectedFile" class="mt-4 text-sm text-green-400 font-medium bg-green-500/10 py-1.5 px-3 rounded inline-block border border-green-500/20">
+                        Selected: <span x-text="selectedFile ? selectedFile.name : ''"></span>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4" x-show="selectedFile">
+                    <button @click="uploadFile" class="inline-flex items-center px-6 py-3 border border-slate-200 dark:border-white/10 text-sm font-bold rounded text-black bg-slate-200 hover:bg-slate-300 dark:bg-white dark:hover:bg-neutral-200 transition-all font-mono uppercase tracking-widest">
+                        Analyze File Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- CCXT Exchange Sync Tab -->
+            <div x-show="activeTab === 'exchange'" class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded p-6 space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-neutral-400 mb-1.5 uppercase font-mono tracking-wider">Exchange</label>
+                        <select x-model="exchangeId" class="w-full bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 text-slate-900 dark:text-white font-mono">
+                            <option value="binance">Binance</option>
+                            <option value="bybit">Bybit</option>
+                            <option value="okx">OKX</option>
+                            <option value="hyperliquid">Hyperliquid</option>
+                            <option value="coinbase">Coinbase</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-neutral-400 mb-1.5 uppercase font-mono tracking-wider">Password / Passphrase (Optional)</label>
+                        <input type="password" x-model="exchangePassword" placeholder="Required for OKX/Coinbase" class="w-full bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 text-slate-900 dark:text-white placeholder-slate-700 font-mono">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-neutral-400 mb-1.5 uppercase font-mono tracking-wider">API Key</label>
+                        <input type="text" x-model="exchangeApiKey" placeholder="Your exchange API key" class="w-full bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 text-slate-900 dark:text-white placeholder-slate-700 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-neutral-400 mb-1.5 uppercase font-mono tracking-wider">API Secret</label>
+                        <input type="password" x-model="exchangeSecret" placeholder="Your exchange API secret" class="w-full bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 text-slate-900 dark:text-white placeholder-slate-700 font-mono">
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded p-3.5 flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-slate-900 dark:text-white mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="text-xs text-slate-500 dark:text-neutral-400 leading-normal font-mono">
+                        <strong>Read-Only Access Encouraged:</strong> Connection is stateless and handled entirely in-memory. Keys are never saved to disk or database. Please configure your API key with <strong>Read-Only</strong> permissions only.
+                    </div>
+                </div>
+
+                <div class="text-center pt-2">
+                    <button @click="syncExchange" class="inline-flex items-center px-6 py-3 border border-slate-200 dark:border-white/10 text-sm font-bold rounded text-black bg-slate-200 hover:bg-slate-300 dark:bg-white dark:hover:bg-neutral-200 focus:outline-none transition-all w-full justify-center font-mono uppercase tracking-widest">
+                        Sync Exchange & Analyze
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="isAnalyzing" class="flex flex-col items-center justify-center py-24" x-transition>
+            <svg class="animate-spin h-10 w-10 text-accent mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h3 class="text-xl font-medium text-slate-900 dark:text-white" x-text="loadingText">Analyzing trading data...</h3>
+            <p class="text-sm text-slate-500 mt-2">Computing FIFO positions and assessing emotional tilt metrics.</p>
+        </div>
+
+        <!-- Results Dashboard -->
+        <div x-show="hasResults" class="space-y-8" style="display: none;" x-transition.opacity.duration.500ms>
+
+             <!-- Hero Layout: Shortened Net Profit + Dashboard Controls -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Shortened Net Profit Banner -->
+                <div class="lg:col-span-2 bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center hover:border-slate-400 dark:hover:border-white transition-colors duration-200">
+                    <div class="flex items-center space-x-4 sm:space-x-5">
+                        <div class="p-2.5 bg-white/5 rounded border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white flex-shrink-0">
+                            <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 dark:text-neutral-400 font-sans tracking-normal">Net Profit &amp; Loss</p>
+                            <h1 class="text-3xl sm:text-4xl font-black font-mono tracking-tighter mt-0.5 text-slate-900 dark:text-white" :class="metrics.net_pnl >= 0 ? 'text-slate-900 dark:text-white' : 'text-red-500'">
+                                $<span x-text="metrics.net_pnl"></span>
+                            </h1>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 sm:mt-0 flex items-center space-x-6 text-right">
+                        <div>
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 dark:text-neutral-400 font-sans tracking-normal">Account Risk Rating</p>
+                            <div x-show="auditRun" x-transition.duration.300ms class="inline-flex mt-1 items-center space-x-1.5 text-xs sm:text-sm font-semibold font-sans"
+                                 :class="{
+                                    'text-green-400': status === 'STABLE',
+                                    'text-yellow-500': status === 'PROBATION',
+                                    'text-red-400': status === 'SUSPENDED',
+                                 }">
+                                <span class="w-2 h-2 rounded-full"
+                                      :class="{
+                                          'bg-green-400': status === 'STABLE',
+                                          'bg-yellow-400': status === 'PROBATION',
+                                          'bg-red-400': status === 'SUSPENDED'
+                                      }"></span>
+                                <span x-text="status"></span>
+                            </div>
+                            <div x-show="!auditRun" class="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 font-semibold mt-1">NO AUDIT RUN</div>
+                        </div>
+                        <div>
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 dark:text-neutral-400 font-sans tracking-normal">Journal Mode</p>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 dark:text-neutral-300 mt-1 font-sans">Stateless FIFO</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Controls Box -->
+                <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-5 hover:border-slate-300 dark:hover:border-slate-400 dark:hover:border-white transition-colors duration-200 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-neutral-300 mb-3 flex items-center space-x-2 font-sans">
+                            <svg class="w-4 h-4 text-slate-700 dark:text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                            <span>Dashboard Controls</span>
+                        </h4>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button @click="auditDrawerOpen = true" class="text-[11px] bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-neutral-500 hover:text-slate-900 dark:hover:text-white dark:text-white py-1.5 px-2 rounded text-slate-700 dark:text-neutral-300 font-semibold transition-all flex items-center justify-center space-x-1">
+                                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                <span>Risk Audit</span>
+                            </button>
+                            <button @click="showDataEditor = true" class="text-[11px] bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-neutral-500 hover:text-slate-900 dark:hover:text-white dark:text-white py-1.5 px-2 rounded text-slate-700 dark:text-neutral-300 font-semibold transition-all text-center">
+                                Edit Data
+                            </button>
+                            <button @click="exportToCsv()" class="text-[11px] bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-neutral-500 hover:text-slate-900 dark:hover:text-white dark:text-white py-1.5 px-2 rounded text-slate-700 dark:text-neutral-300 font-semibold transition-all text-center">
+                                Export CSV
+                            </button>
+                            <button @click="reset()" class="text-[11px] bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-neutral-500 hover:text-slate-900 dark:hover:text-white dark:text-white py-1.5 px-2 rounded text-slate-700 dark:text-neutral-300 font-semibold transition-all text-center">
+                                Reset Dashboard
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between border-t border-slate-200 dark:border-white/10/60 pt-2.5">
+                        <span class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Chart Theme</span>
+                        <div class="flex items-center space-x-2 text-xs font-semibold font-sans">
+                            <button @click="setChartTheme('classic')" :class="chartTheme === 'classic' ? 'text-black dark:text-white border-b-2 border-black dark:border-white font-bold' : 'text-slate-400 dark:text-neutral-500 hover:text-black dark:hover:text-white transition-colors'" class="pb-0.5">Classic</button>
+                            <span class="text-neutral-400 dark:text-neutral-600">/</span>
+                            <button @click="setChartTheme('monochrome')" :class="chartTheme === 'monochrome' ? 'text-black dark:text-white border-b-2 border-black dark:border-white font-bold' : 'text-slate-400 dark:text-neutral-500 hover:text-black dark:hover:text-white transition-colors'" class="pb-0.5">Mono</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grouped Metrics Dashboard -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Group 1: Core Performance -->
+                <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-none sm:rounded-xl p-5 relative overflow-hidden flex flex-col justify-between hover:border-slate-400 dark:hover:border-white transition-colors">
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-neutral-300 mb-4 flex items-center space-x-2 font-sans">
+                            <svg class="w-4 h-4 text-slate-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 00-2 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <span>Core Performance</span>
+                        </h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <!-- Win Rate -->
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Win Rate</p>
+                                <p class="mt-1 text-lg font-bold font-mono" :class="metrics.win_rate >= 0.5 ? 'text-emerald-400' : 'text-rose-500'">
+                                    <span x-text="(metrics.win_rate * 100).toFixed(1)"></span>%
+                                </p>
+                            </div>
+                            
+                            <!-- Profit Factor -->
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Profit Factor</p>
+                                <p class="mt-1 text-lg font-bold font-mono" :class="metrics.profit_factor === 'Inf' || parseFloat(metrics.profit_factor) >= 1.5 ? 'text-emerald-400' : (parseFloat(metrics.profit_factor) < 1.0 ? 'text-rose-500' : 'text-slate-900 dark:text-white')" x-text="metrics.profit_factor"></p>
+                            </div>
+                            
+                            <!-- Avg Drawdown -->
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Avg DD</p>
+                                <p class="mt-1 text-lg font-bold font-mono" :class="metrics.avg_drawdown <= 2.0 ? 'text-emerald-400' : (metrics.avg_drawdown <= 5.0 ? 'text-amber-500' : 'text-rose-500')">
+                                    <span x-text="metrics.avg_drawdown"></span>%
+                                </p>
+                            </div>
+
+                            <!-- Max Drawdown -->
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Max DD</p>
+                                <p class="mt-1 text-lg font-bold font-mono" :class="metrics.max_drawdown <= 5.0 ? 'text-emerald-400' : (metrics.max_drawdown <= 10.0 ? 'text-amber-500' : 'text-rose-500')">
+                                    <span x-text="metrics.max_drawdown"></span>%
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 2: Behavioral & Overtrading -->
+                <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-none sm:rounded-xl p-5 relative overflow-hidden flex flex-col justify-between hover:border-slate-400 dark:hover:border-white transition-colors">
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-neutral-300 mb-4 flex items-center space-x-2 font-sans">
+                            <svg class="w-4 h-4 text-slate-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>Behavior & Sessions</span>
+                        </h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors" :class="metrics.num_revenge_trades > 0 ? 'border-red-500/50' : ''">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Revenge Trades</p>
+                                <p class="mt-1 text-lg font-bold font-mono" :class="metrics.num_revenge_trades > 0 ? 'text-red-400 animate-pulse' : 'text-slate-900 dark:text-white'" x-text="metrics.num_revenge_trades"></p>
+                            </div>
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors" :class="metrics.tilt_sessions > 0 ? 'border-red-500/50' : ''">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Tilt Sessions</p>
+                                <p class="mt-1 text-lg font-bold font-mono" :class="metrics.tilt_sessions > 0 ? 'text-red-400 animate-pulse' : 'text-slate-900 dark:text-white'" x-text="metrics.tilt_sessions"></p>
+                            </div>
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Total Sessions</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white font-mono" x-text="metrics.total_sessions"></p>
+                            </div>
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">DD Duration</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white font-mono" x-text="metrics.max_drawdown_duration + ' trades'"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 3: Execution Timing Faults -->
+                <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-none sm:rounded-xl p-5 relative overflow-hidden flex flex-col justify-between hover:border-slate-400 dark:hover:border-white transition-colors">
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-neutral-300 mb-4 flex items-center space-x-2 font-sans">
+                            <svg class="w-4 h-4 text-slate-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <span>Execution Faults</span>
+                        </h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Premature Entries</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white font-mono" x-text="metrics.num_early_entries"></p>
+                            </div>
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">FOMO Chasing</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white font-mono" x-text="metrics.num_late_entries"></p>
+                            </div>
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Fearful Exits</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white font-mono" x-text="metrics.num_early_exits"></p>
+                            </div>
+                            <div class="bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded-lg p-3 transition-colors">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">Late Exits</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white font-mono" x-text="metrics.num_late_exits"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cumulative PnL / Per-Trade PnL Toggle Card (Full Width, Bento style) -->
+            <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg hover:border-slate-400 dark:hover:border-white transition-colors">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <h3 class="text-md font-bold text-slate-900 dark:text-white" x-text="equityPnlTab === 'equity' ? 'Cumulative PnL' : 'PnL per Trade'"></h3>
+                    
+                    <div class="flex items-center space-x-6 text-xs font-semibold font-sans">
+                        <!-- Chart Selection -->
+                        <div class="flex items-center space-x-2">
+                            <button @click="switchEquityPnlTab('equity')" :class="equityPnlTab === 'equity' ? 'text-slate-900 border-b border-slate-900 dark:text-white dark:border-white' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white dark:text-white'" class="pb-0.5 transition-all">Cumulative PnL</button>
+                            <span class="text-neutral-700">/</span>
+                            <button @click="switchEquityPnlTab('pnl')" :class="equityPnlTab === 'pnl' ? 'text-slate-900 border-b border-slate-900 dark:text-white dark:border-white' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white dark:text-white'" class="pb-0.5 transition-all">PnL per Trade</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative h-72 w-full">
+                    <canvas id="equityChart" class="absolute inset-0 w-full h-full" x-show="equityPnlTab === 'equity'"></canvas>
+                    <canvas id="pnlChart" class="absolute inset-0 w-full h-full" x-show="equityPnlTab === 'pnl'"></canvas>
+                </div>
+            </div>
+
+            <!-- ── EXECUTION ANALYSIS SECTION ────────────────────────────── -->
+            <div class="mt-8">
+                <div class="flex items-center space-x-3 mb-5">
+                    <h2 class="text-3xl font-black uppercase tracking-widest text-black dark:text-white italic font-sans">Execution Analysis</h2>
+                    <div class="flex-1 h-px bg-muted"></div>
+                </div>
+
+                <!-- Counterfactual Drift + Risk vs Reward (Asymmetric 4-col) -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 items-stretch">
+                    
+                    <!-- Left Column Stack -->
+                    <div class="md:col-span-2 flex flex-col space-y-6">
+                        <!-- Counterfactual 30m Drift (1-col) -->
+                    <div class="w-full bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg text-center flex flex-col justify-center min-h-[120px] hover:border-slate-400 dark:hover:border-white transition-colors">
+                        <p class="text-xs font-semibold text-slate-500 dark:text-neutral-400 mb-2 font-sans">Counterfactual 30m Drift</p>
+                        <p class="text-4xl font-black mb-2 font-mono text-black dark:text-white" :class="avgDrift >= 0 ? 'text-black dark:text-white' : 'text-red-400'">
+                            <span x-text="avgDrift > 0 ? '+' : ''"></span><span x-text="avgDrift.toFixed(2)"></span>%
+                        </p>
+                        <p class="text-[11px] text-slate-500 leading-tight">Average price move in your direction 30m post-entry.</p>
+                    </div>
+                        <!-- Market Regime (full width) -->
+                <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg hover:border-slate-400 dark:hover:border-white transition-colors flex-1 flex flex-col justify-between">
+                    <h3 class="text-md font-bold text-slate-900 dark:text-white mb-4">Market Regime Expectancy</h3>
+                    <div class="relative flex-1 min-h-[150px] w-full">
+                        <canvas id="regimeChart"></canvas>
+                    </div>
+                </div>
+                    </div>
+                    <!-- Risk vs Reward Scatter (3-col) -->
+                    <div class="md:col-span-3 bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg flex flex-col justify-between hover:border-slate-400 dark:hover:border-white transition-colors h-full">
+                        <h3 class="text-md font-bold text-slate-900 dark:text-white mb-2">Risk vs. Reward (MAE / MFE)</h3>
+                        <div class="relative flex-1 min-h-[250px] w-full">
+                            <canvas id="scatterChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timing + Sessions + Regime (Equal 2-col grids) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg hover:border-slate-400 dark:hover:border-white transition-colors">
+                        <h3 class="text-md font-bold text-slate-900 dark:text-white mb-4">Execution Timing by Hour</h3>
+                        <div class="relative h-56 w-full">
+                            <canvas id="hourlyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg hover:border-slate-400 dark:hover:border-white transition-colors">
+                        <h3 class="text-md font-bold text-slate-900 dark:text-white mb-4">Trading Sessions</h3>
+                        <div class="relative h-56 w-full">
+                            <canvas id="sessionBubbleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                <!-- ── STRATEGY ANALYSIS SECTION ────────────────────────────── -->
+            <div class="mt-8">
+                <div class="flex items-center space-x-3 mb-5">
+                    <h2 class="text-3xl font-black uppercase tracking-widest text-black dark:text-white italic font-sans">Strategy Analysis</h2>
+                    <div class="flex-1 h-px bg-muted"></div>
+                </div>
+
+                <!-- Strategy Grid: Matrix (2-col) and Donut (1-col) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                    <!-- Strategy Matrix Table -->
+                    <div class="md:col-span-2 bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg hover:border-slate-400 dark:hover:border-white transition-colors">
+                        <h3 class="text-md font-bold text-slate-900 dark:text-white mb-4">Strategy Matrix</h3>
+                    
+                    <div class="flex space-x-2 border-b border-slate-200 dark:border-white/10 mb-4">
+                        <template x-for="tab in ['OVERALL', 'LONG', 'SHORT']">
+                            <button @click="activeStrategyTab = tab"
+                                    :class="activeStrategyTab === tab ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white border-b-2 font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+                                    class="pb-2 px-3 text-xs tracking-wider uppercase font-mono transition-colors"
+                                    x-text="tab"></button>
+                        </template>
+                    </div>
+
+                    <div class="overflow-x-auto overflow-y-auto max-h-[350px] rounded-xl border border-slate-200 dark:border-white/10">
+                        <table class="w-full text-left text-sm text-slate-800 dark:text-slate-200">
+                            <thead class="sticky top-0 z-10 text-xs uppercase bg-slate-200 dark:bg-neutral-900 text-slate-700 dark:text-neutral-400 shadow-sm">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold">Strategy Tag</th>
+                                    <th class="px-4 py-3 font-semibold text-right">Trades</th>
+                                    <th class="px-4 py-3 font-semibold text-right">Net Profit</th>
+                                    <th class="px-4 py-3 font-semibold text-right">Win Rate</th>
+                                    <th class="px-4 py-3 font-semibold text-right">Profit Factor</th>
+                                    <th class="px-4 py-3 font-semibold text-right">Avg Return</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-if="metrics.summary_matrix && metrics.summary_matrix[activeStrategyTab]">
+                                    <template x-for="(stats, tag) in metrics.summary_matrix[activeStrategyTab]" :key="tag">
+                                        <tr class="border-b border-slate-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-800/40 transition-colors">
+                                            <td class="px-4 py-3 font-mono text-slate-900 dark:text-white font-bold" x-text="tag"></td>
+                                            <td class="px-4 py-3 text-right" x-text="stats.total_trades"></td>
+                                            <td class="px-4 py-3 text-right font-bold" :class="stats.net_profit >= 0 ? 'text-green-400' : 'text-red-400'" x-text="'$' + stats.net_profit.toFixed(2)"></td>
+                                            <td class="px-4 py-3 text-right" x-text="stats.win_rate.toFixed(1) + '%'"></td>
+                                            <td class="px-4 py-3 text-right" x-text="stats.profit_factor === 'Inf' ? '∞' : stats.profit_factor.toFixed(2)"></td>
+                                            <td class="px-4 py-3 text-right" :class="stats.avg_profit_pct >= 0 ? 'text-green-400' : 'text-red-400'" x-text="stats.avg_profit_pct.toFixed(2) + '%'"></td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <template x-if="!metrics.summary_matrix || !metrics.summary_matrix[activeStrategyTab] || Object.keys(metrics.summary_matrix[activeStrategyTab]).length === 0">
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-6 text-center text-slate-500 italic">No strategies found for this direction.</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                    
+                <!-- Donut Chart -->
+                <div class="md:col-span-1 bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg hover:border-slate-400 dark:hover:border-white transition-colors flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-md font-bold text-slate-900 dark:text-white">Exposure</h3>
+                        <select x-model="donutType" @change="updateDonutChart" class="bg-slate-100 dark:bg-darkbg text-xs border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-0 focus:border-neutral-500 font-mono tracking-wider cursor-pointer">
+                            <option value="asset">Asset</option>
+                            <option value="direction">Direction</option>
+                            <option value="strategy">Strategy</option>
+                        </select>
+                    </div>
+                    <div class="relative flex-1 w-full flex items-center justify-center min-h-[200px]">
+                        <canvas id="donutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Tag Editor -->
+            <div class="bg-slate-50 dark:bg-white/5 dark:backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-lg mt-6 hover:border-slate-400 dark:hover:border-white transition-colors">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-md font-bold text-slate-900 dark:text-white">Tag Editor</h3>
+                    <div class="space-x-2">
+                        <button @click="reanalyzeEditedTrades" class="px-3 py-1.5 bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 hover:border-slate-400 dark:hover:border-neutral-500 text-slate-600 dark:text-neutral-300 hover:text-black dark:hover:text-white text-xs font-bold font-mono uppercase tracking-wider rounded transition-all">Re-Analyze</button>
+                        <button @click="downloadEditedCsv" class="px-3 py-1.5 bg-slate-100 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 hover:border-slate-400 dark:hover:border-neutral-500 text-slate-600 dark:text-neutral-300 hover:text-black dark:hover:text-white text-xs font-bold font-mono uppercase tracking-wider rounded transition-all">Export CSV</button>
+                    </div>
+                </div>
+                    
+                    <div class="overflow-x-auto overflow-y-auto max-h-[400px] rounded-xl border border-slate-200 dark:border-white/10">
+                        <table class="w-full text-left text-sm text-slate-800 dark:text-slate-200">
+                            <thead class="sticky top-0 z-10 text-xs uppercase bg-slate-200 dark:bg-neutral-900 text-slate-700 dark:text-neutral-400 shadow-sm">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold">Date</th>
+                                    <th class="px-4 py-3 font-semibold">Asset</th>
+                                    <th class="px-4 py-3 font-semibold">Side</th>
+                                    <th class="px-4 py-3 font-semibold text-right">PnL</th>
+                                    <th class="px-4 py-3 font-semibold w-1/3">Strategy Tag</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(trade, idx) in trades" :key="idx">
+                                    <tr class="border-b border-slate-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-800/40 transition-colors">
+                                        <td class="px-4 py-2" x-text="trade.date || new Date(trade.timestamp).toLocaleString()"></td>
+                                        <td class="px-4 py-2 font-bold" x-text="trade.asset"></td>
+                                        <td class="px-4 py-2" :class="trade.side.toLowerCase() === 'buy' ? 'text-green-400' : 'text-red-400'" x-text="trade.side"></td>
+                                        <td class="px-4 py-2 text-right" :class="trade.pnl >= 0 ? 'text-green-400' : 'text-red-400'" x-text="trade.pnl.toFixed(2)"></td>
+                                        <td class="px-4 py-2">
+                                            <input type="text" x-model="trade.strategy_tag" class="w-full bg-slate-100 dark:bg-neutral-900 border border-slate-300 dark:border-neutral-700 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-neutral-400 focus:outline-none text-slate-900 dark:text-white font-mono">
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+    </div>
+
+    <!-- Slide-over Drawer for Risk Audit -->
+    <div x-show="auditDrawerOpen" class="fixed inset-0 overflow-hidden z-50" x-cloak>
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+             @click="auditDrawerOpen = false"
+             x-show="auditDrawerOpen"
+             x-transition:enter="ease-in-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in-out duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"></div>
+
+        <!-- Drawer Content -->
+        <div class="absolute inset-y-0 right-0 pl-10 max-w-full flex">
+            <div class="w-screen max-w-lg bg-white dark:bg-darkbg border-l border-slate-200 dark:border-white/10 shadow-2xl flex flex-col"
+                 x-show="auditDrawerOpen"
+                 x-transition:enter="transform transition ease-in-out duration-300"
+                 x-transition:enter-start="translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transform transition ease-in-out duration-300"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="translate-x-full">
+                 
+                 <!-- Header -->
+                 <div class="px-6 py-5 bg-slate-50 dark:bg-neutral-900 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+                     <div class="flex items-center space-x-2.5">
+                         <h3 class="text-lg font-bold text-slate-900 dark:text-white">Risk Audit</h3>
+                     </div>
+                     <button @click="auditDrawerOpen = false" class="text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                     </button>
+                 </div>
+                 
+                 <!-- Body -->
+                 <div class="p-6 flex-1 overflow-y-auto space-y-6 flex flex-col justify-start">
+                     <!-- 1. Audit Setup Interface (When audit has NOT been run yet) -->
+                     <div x-show="!auditRun && !isAuditing" class="flex-1 flex flex-col justify-center space-y-5">
+                         <div class="text-center space-y-2">
+                             <svg class="w-12 h-12 text-slate-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                             <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Submit for Review</h4>
+                             <p class="text-xs text-slate-400 max-w-xs mx-auto leading-normal">Send your execution ledger to the selected LLM model for a structured risk and performance review.</p>
+                         </div>
+
+                          <div class="bg-slate-50 dark:bg-white/5 p-4 rounded border border-slate-200 dark:border-white/10 space-y-4">
+                              <div class="space-y-2">
+                                  <label class="block text-xs font-semibold text-slate-500 dark:text-neutral-400 font-sans">API Access Mode</label>
+                                  <div class="flex items-center space-x-3 text-xs font-semibold font-sans mt-1">
+                                      <button @click="useCustomKey = false"
+                                              :class="!useCustomKey ? 'text-black dark:text-white border-b-2 border-black dark:border-white font-bold' : 'text-slate-400 dark:text-neutral-500 hover:text-black dark:hover:text-white transition-colors'"
+                                              class="pb-0.5 text-center">
+                                          Free Quota
+                                      </button>
+                                      <span class="text-neutral-400 dark:text-neutral-600">/</span>
+                                      <button @click="useCustomKey = true"
+                                              :class="useCustomKey ? 'text-black dark:text-white border-b-2 border-black dark:border-white font-bold' : 'text-slate-400 dark:text-neutral-500 hover:text-black dark:hover:text-white transition-colors'"
+                                              class="pb-0.5 text-center">
+                                          Custom API Key
+                                      </button>
+                                  </div>
+                              </div>
+                              <div x-show="!useCustomKey" x-transition.duration.200ms>
+                                  <p class="text-xs text-slate-500 dark:text-neutral-400 text-center font-mono">
+                                      Trader ID: 
+                                      <span class="text-black dark:text-white font-bold" x-text="traderId"></span>
+                                  </p>
+                              </div>
+                              <div x-show="useCustomKey" x-transition.duration.200ms class="space-y-2">
+                                  <input type="password" x-model="apiKey" placeholder="sk-or-..." 
+                                         class="w-full bg-white dark:bg-neutral-900 border border-slate-300 dark:border-white/10 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-neutral-500 text-slate-900 dark:text-white placeholder-slate-400 font-sans">
+                                  
+                                  <select x-model="selectedModel" 
+                                          class="w-full bg-white dark:bg-neutral-900 border border-slate-300 dark:border-white/10 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-0 focus:border-neutral-500 text-slate-900 dark:text-white font-sans cursor-pointer">
+                                      <option value="deepseek/deepseek-r1">DeepSeek R1</option>
+                                      <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+                                      <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                      <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+                                      <option value="openai/gpt-4o">GPT-4o</option>
+                                      <option value="openai/gpt-4o-mini">GPT-4o-mini</option>
+                                      <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B</option>
+                                  </select>
+                              </div>
+                          </div>
+ 
+                          <button @click="runAudit" class="w-full py-2.5 px-4 bg-slate-950 hover:bg-slate-900 text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-black rounded text-xs font-bold font-sans transition-all">
+                              Start Audit
+                          </button>
+                     </div>
+
+                     <!-- 2. Loading Audit (When request in progress) -->
+                     <div x-show="isAuditing" class="flex-1 flex flex-col items-center justify-center space-y-3">
+                         <svg class="animate-spin h-8 w-8 text-slate-900 dark:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                         </svg>
+                         <p class="text-xs text-slate-400 font-mono">Running review...</p>
+                     </div>
+
+                     <!-- 3. Audit Output (When audit has completed successfully) -->
+                     <div x-show="auditRun && !isAuditing" class="flex-1 flex flex-col" style="display: none;">
+                         <div class="flex-1 overflow-y-auto max-h-[60vh] pr-2">
+                             <div class="audit-content text-slate-700 dark:text-slate-200 text-sm leading-relaxed" x-html="rawAudit ? (rawAudit.includes('<div') ? rawAudit : marked.parse(rawAudit)) : ''"></div>
+                         </div>
+                         
+                         <!-- Choice Toggle and Settings present after analysis is run -->
+                         <div class="mt-4 pt-4 border-t border-slate-800 space-y-3">
+                              <div class="space-y-2">
+                                  <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-widest font-mono">API Access Mode</label>
+                                  <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-200 dark:bg-darkbg border border-slate-300 dark:border-white/10 rounded">
+                                      <button @click="useCustomKey = false"
+                                              :class="!useCustomKey ? 'bg-white text-black font-bold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+                                              class="py-1 text-[10px] font-mono uppercase tracking-wider rounded transition-all text-center">
+                                          Free Quota
+                                      </button>
+                                      <button @click="useCustomKey = true"
+                                              :class="useCustomKey ? 'bg-white text-black font-bold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+                                              class="py-1 text-[10px] font-mono uppercase tracking-wider rounded transition-all text-center">
+                                          Custom API Key
+                                      </button>
+                                  </div>
+                              </div>
+ 
+                              <!-- Whitelist Trader ID Input (When using free key) -->
+                              <div x-show="!useCustomKey" x-transition.duration.200ms class="space-y-2">
+                                  <div class="grid grid-cols-3 gap-2 items-center">
+                                      <input type="text" x-model="traderId" disabled 
+                                             class="col-span-2 bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded px-2.5 py-1 text-xs text-slate-400 font-mono cursor-not-allowed">
+                                      <button @click="runAudit" class="col-span-1 py-1 px-2 bg-neutral-800 hover:bg-neutral-700 text-slate-900 dark:text-white rounded text-[10px] font-bold font-mono uppercase tracking-wider transition-all">
+                                          Re-run
+                                      </button>
+                                  </div>
+                                  <p class="text-[9px] text-slate-500 font-mono">Each ID has 100 free AI analyses/month.</p>
+                              </div>
+ 
+                              <!-- Custom OpenRouter Key Input (When toggled) -->
+                              <div x-show="useCustomKey" x-transition.duration.200ms class="space-y-2">
+                                  <div class="grid grid-cols-3 gap-2 items-center">
+                                      <input type="password" x-model="apiKey" placeholder="sk-or-..." 
+                                             class="col-span-2 bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-white/10 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-neutral-500 text-slate-900 dark:text-white placeholder-slate-800 font-mono">
+                                      <button @click="runAudit" class="col-span-1 py-1 px-2 bg-neutral-800 hover:bg-neutral-700 text-slate-900 dark:text-white rounded text-[10px] font-bold font-mono uppercase tracking-wider transition-all">
+                                          Re-run
+                                      </button>
+                                  </div>
+                                  <p class="text-[9px] text-slate-500 font-mono">Queries deepseek-r1 directly. Bypasses limits.</p>
+                              </div>
+                             
+                             <div class="flex items-center justify-between pt-1 text-[10px] text-slate-500 border-t border-slate-800/40">
+                                 <button @click="resetAudit()" class="hover:text-slate-900 dark:text-white flex items-center space-x-1">
+                                     <span>← Reset Audit Panel</span>
+                                 </button>
+                                 <span x-text="useCustomKey ? 'Custom API key' : 'Trader ID Quota Active'"></span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Watermark / Footer -->
+        <footer class="mt-12 py-6 border-t border-slate-200 dark:border-white/10 text-center flex-shrink-0 space-y-2">
+            <p class="text-xs text-slate-500 font-mono tracking-widest uppercase">
+                Generated by <span class="font-bold text-black dark:text-white lowercase italic font-sans">clearer.trade</span>
+            </p>
+            <p class="text-[10px] text-slate-600 font-mono">
+                <button type="button" onclick="document.getElementById('disclaimer-modal').classList.remove('hidden')" class="hover:text-slate-400 underline">Financial & Risk Disclaimer</button>
+            </p>
+        </footer>
+
+        
+        <!-- Data Editor Modal -->
+        <div x-show="showDataEditor" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div class="bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-5xl h-[80vh] flex flex-col shadow-2xl relative">
+                <!-- Header -->
+                <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-white/10">
+                    <h3 class="text-lg font-bold font-sans text-slate-900 dark:text-white">Edit Trades</h3>
+                    <button @click="showDataEditor = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <!-- Body -->
+                <div class="flex-1 overflow-auto p-4 relative bg-white dark:bg-[#000000]">
+                    <table class="w-full text-left border-collapse font-mono text-xs">
+                        <thead class="sticky top-0 bg-slate-100 dark:bg-neutral-900 shadow">
+                            <tr>
+                                <template x-for="(val, col) in trades[0]" :key="col">
+                                    <th class="px-2 py-2 border border-slate-200 dark:border-white/10 font-bold uppercase tracking-wider text-slate-700 dark:text-neutral-300" x-text="col"></th>
+                                </template>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(row, idx) in trades" :key="idx">
+                                <tr class="hover:bg-slate-50 dark:hover:bg-neutral-900/50">
+                                    <template x-for="(val, col) in row" :key="col">
+                                        <td class="px-2 py-1 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-300">
+                                            <input type="text" x-model="trades[idx][col]" class="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-slate-500 p-1 font-mono text-xs" />
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Footer -->
+                <div class="p-4 border-t border-slate-200 dark:border-white/10 flex justify-end space-x-3 bg-slate-50 dark:bg-[#0a0a0a]">
+                    <button @click="showDataEditor = false" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-900 dark:text-white font-bold rounded text-xs uppercase tracking-widest transition-colors font-mono">Cancel</button>
+                    <button @click="saveAndReanalyze()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black font-bold rounded text-xs uppercase tracking-widest transition-colors font-mono">Save & Reanalyze</button>
+                </div>
+            </div>
+        </div>
+    <!-- Financial Disclaimer Modal (Moved outside isLoggedIn wrapper) -->
+    <div id="disclaimer-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/10 rounded-xl w-full max-w-lg p-6 shadow-2xl relative space-y-4 font-sans">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-3">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Terms & Financial Disclaimer</h3>
+                <button type="button" onclick="document.getElementById('disclaimer-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="text-xs text-slate-400 space-y-3 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                <p><strong>1. Educational & Behavioral Tool Only:</strong> <span class="lowercase italic font-bold">clearer.trade</span> is a performance analysis and execution audit suite designed strictly for educational, psychological, and record-keeping purposes.</p>
+                <p><strong>2. No Financial Advice:</strong> Nothing contained within this application—including metrics, tilt warnings, and AI behavioral audit reports—constitutes financial, investment, legal, or trading advice.</p>
+                <p><strong>3. No Profit Guarantee:</strong> Financial markets involve substantial risk of loss. Past trading performance and AI-generated risk verdicts do not guarantee, predict, or ensure future profitability or performance recovery.</p>
+                <p><strong>4. User Responsibility:</strong> You are solely responsible for your own trading decisions, risk management, and capital allocation.</p>
+            </div>
+            <div class="pt-2 text-right">
+                <button type="button" onclick="document.getElementById('disclaimer-modal').classList.add('hidden')" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black font-bold rounded text-xs uppercase tracking-widest font-mono">
+                    I Understand
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
