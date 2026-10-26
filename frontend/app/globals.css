@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #000000;
+  --foreground: #e5e5e5;
+}
+
+body {
+  color: var(--foreground);
+  background-color: #070a0f !important;
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* Custom Sleek Dark Theme Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(18, 20, 22, 0.8);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(53, 57, 60, 0.8);
+  border-radius: 9999px;
+  border: 1px solid rgba(38, 42, 45, 0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(164, 216, 255, 0.8);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(64, 64, 64, 0.8) rgba(23, 23, 23, 0.8);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* PDF Generation & Print Override for Pure Dark Theme */
+.is-generating-pdf,
+.is-generating-pdf body,
+.is-generating-pdf #dashboard-main-content {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.is-generating-pdf .bg-neutral-900\/60,
+.is-generating-pdf .bg-neutral-900,
+.is-generating-pdf .bg-neutral-950,
+.is-generating-pdf .bg-neutral-900\/80,
+.is-generating-pdf .bg-neutral-900\/40,
+.is-generating-pdf .bg-neutral-900\/20,
+.is-generating-pdf .bg-neutral-800,
+.is-generating-pdf .bg-neutral-950\/80 {
+  background-color: #121212 !important;
+  border-color: #262626 !important;
+}
+
+.is-generating-pdf .bg-black {
+  background-color: #050505 !important;
+  border-color: #1f1f1f !important;
+}
+
+/* Force dark mode background colors when printing */
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  html, body {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header,
+  [data-html2canvas-ignore="true"],
+  .no-print {
+    display: none !important;
+  }
+
+  .bg-neutral-900\/60,
+  .bg-neutral-900,
+  .bg-neutral-950,
+  .bg-neutral-800 {
+    background-color: #121212 !important;
+    border-color: #262626 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .bg-black {
+    background-color: #050505 !important;
+    border-color: #1f1f1f !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .rounded-xl,
+  .border,
+  canvas,
+  svg {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

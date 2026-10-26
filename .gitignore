@@ -1,0 +1,68 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.pytest_cache/
+
+# Next.js / Node.js
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+frontend/out/
+*.tsbuildinfo
+frontend/*.tsbuildinfo
+
+# C extensions
+*.so
+
+# Environment Variables & Secrets (NEVER PUSH KEYS)
+.env
+.env.*
+.env*.local
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+.secrets
+*.secrets
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.id_rsa
+*service_account*.json
+credentials.json
+token.json
+!.env.example
+!frontend/.env.example
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+pyvenv.cfg
+
+# Local databases, dumps & logs
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.log
+*.dump
+drop_and_audit.db
+scratch/
+brain/
+
+# Vercel
+.vercel
+
+# OS generated
+.DS_Store
+Thumbs.db
+desktop.ini
