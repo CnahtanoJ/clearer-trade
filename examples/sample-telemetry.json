@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "node_id": "clear-alpha-ref-01",
+    "last_updated_utc": "2026-11-17T00:00:00Z",
+    "attestation_sha256": "8f4e2a9c1b7d3e6f0a5c8b2d4e1f9a3c7b5d8e2f1a4c6b9d0e3f7a2c5b8d1e4f",
+    "region": "ap-northeast-1",
+    "publication_delay_hours": 24,
+    "tick_stagger_bucket_ms": 150,
+    "decorrelation_cohort": "tokyo-systematic-v1"
+  },
+  "equity_curve": [
+    { "date": "2026-11-01", "twr_index": 100.0, "daily_return_pct": 0.0 },
+    { "date": "2026-11-02", "twr_index": 100.42, "daily_return_pct": 0.42 },
+    { "date": "2026-11-03", "twr_index": 100.91, "daily_return_pct": 0.49 },
+    { "date": "2026-11-04", "twr_index": 100.74, "daily_return_pct": -0.17 },
+    { "date": "2026-11-05", "twr_index": 101.38, "daily_return_pct": 0.64 },
+    { "date": "2026-11-06", "twr_index": 101.95, "daily_return_pct": 0.56 },
+    { "date": "2026-11-07", "twr_index": 102.21, "daily_return_pct": 0.25 },
+    { "date": "2026-11-08", "twr_index": 102.89, "daily_return_pct": 0.67 },
+    { "date": "2026-11-09", "twr_index": 102.64, "daily_return_pct": -0.24 },
+    { "date": "2026-11-10", "twr_index": 103.31, "daily_return_pct": 0.65 },
+    { "date": "2026-11-11", "twr_index": 103.88, "daily_return_pct": 0.55 },
+    { "date": "2026-11-12", "twr_index": 104.19, "daily_return_pct": 0.30 },
+    { "date": "2026-11-13", "twr_index": 104.76, "daily_return_pct": 0.55 },
+    { "date": "2026-11-14", "twr_index": 104.61, "daily_return_pct": -0.14 },
+    { "date": "2026-11-15", "twr_index": 105.24, "daily_return_pct": 0.60 },
+    { "date": "2026-11-16", "twr_index": 105.79, "daily_return_pct": 0.52 },
+    { "date": "2026-11-17", "twr_index": 106.34, "daily_return_pct": 0.52 }
+  ],
+  "execution_hygiene": {
+    "maker_fill_ratio": 0.989,
+    "avg_mae_bps": 4.2,
+    "avg_mfe_bps": 18.7,
+    "adverse_drift_bps": 1.35,
+    "total_fills_bucketed": 12450
+  },
+  "anonymized_baskets": [
+    { "asset_alias": "Asset_A", "fill_share_pct": 41.2, "avg_mae_bps": 3.8 },
+    { "asset_alias": "Asset_B", "fill_share_pct": 28.6, "avg_mae_bps": 4.5 },
+    { "asset_alias": "Asset_C", "fill_share_pct": 19.4, "avg_mae_bps": 4.1 },
+    { "asset_alias": "Asset_D", "fill_share_pct": 10.8, "avg_mae_bps": 5.2 }
+  ]
+}

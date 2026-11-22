@@ -1,0 +1,35 @@
+[build-system]
+requires = ['setuptools>=68.0']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'clearer-trade'
+version = '0.1.0'
+description = 'Open-source post-trade execution auditing and zero-leakage telemetry primitives for clearer.trade.'
+readme = 'clearer_trade/README.md'
+requires-python = '>=3.11'
+license = {text = 'MIT'}
+dependencies = []
+keywords = ['trading', 'telemetry', 'execution', 'analytics', 'twr', 'mae', 'mfe']
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Financial and Insurance Industry',
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Topic :: Office/Business :: Financial :: Investment',
+    'Typing :: Typed',
+]
+
+[project.urls]
+Homepage = 'https://clearer.trade'
+Repository = 'https://github.com/CnahtanoJ/clearer-trade'
+Issues = 'https://github.com/CnahtanoJ/clearer-trade/issues'
+
+[tool.setuptools.packages.find]
+include = ['clearer_trade*']
+
+[tool.setuptools.package-data]
+clearer_trade = ['py.typed']
